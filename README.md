@@ -28,4 +28,6 @@ and also some unused api endpoints are: IQ Air(air quality api), OpenWeatherMap(
 
 3. Run the server:
 ```bash
-npm run dev```
+npm run dev
+http://localhost:3000
+```
