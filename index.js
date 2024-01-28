@@ -1,5 +1,5 @@
-const weatherAPIkey = "e31236ca2959caf5178b8298a93073e8";
-const IQAirAPIkey = "3b7be9cf-cb62-4e05-b700-825f466ce4e1";
+const weatherAPIkey = "e31236ca2959caf5178b8298a93073e8"; // weather API key
+const IQAirAPIkey = "3b7be9cf-cb62-4e05-b700-825f466ce4e1"; // IQAir API key
 
 import express from "express";
 import path from "path";
@@ -34,6 +34,24 @@ app.post("/weather", async (req, res) => {
   console.log(weatherData);
   res.send({ weatherData, forecastData });
 });
+app.post("/randomImage", async (req, res) => {
+  // Fetch a random image from the Unsplash API
+  fetch("https://source.unsplash.com/random")
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.url;
+    })
+    .then((imageUrl) => {
+      res.send({ imageUrl });
+    })
+    .catch((error) => {
+      console.error("There was a problem with the fetch operation:", error);
+      res.status(500).send({ error: "Internal server error" });
+    });
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "index.html"));
 });

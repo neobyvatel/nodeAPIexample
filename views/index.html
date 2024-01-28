@@ -52,10 +52,10 @@
         id="weatherInfo"
         class="flex flex-col items-center p-8 bg-white rounded shadow-md"
       >
-        <h1 id="headliner">Weather information here...</h1>
+        <h1 id="headliner" class="pb-2">Weather information here...</h1>
         <div id="popper" class="hidden">
-          <div id="weatherInfo" class="flex">
-            <h1 id="cityName" class="text-3xl font-semibold mb-2"></h1>
+          <div id="weatherInfo" class="flex bg-neutral-400 rounded">
+            <h1 id="cityName" class="text-3xl font-semibold p-2"></h1>
             <img id="weatherIcon" src="" alt="weather icon" class="w-10 h-10" />
           </div>
 
@@ -65,7 +65,8 @@
           <h5 id="humidity" class="text-base text-gray-500 mb-2"></h5>
           <h5 id="pressure" class="text-base text-gray-500 mb-2"></h5>
           <h6 id="windSpeed" class="text-base text-gray-500 mb-2"></h6>
-          <h3 id="rainVolume" class="text-lg text-gray-500 mb-2"></h3>
+          <h6 id="coords" class="text-sm text-gray-500 mb-2"></h6>
+          <h6 class="text-sm text-gray-800 mb-2">Map:</h6>
           <div
             id="map"
             style="width: 300px; height: 300px"
@@ -74,10 +75,24 @@
         </div>
       </div>
     </div>
+
+    <div
+      id="randomImageContainer"
+      class="flex items-center justify-center gap-4 p-8 bg-white rounded shadow-md w-1/2 mx-auto my-8 flex-col"
+    >
+      <button
+        onclick="randomImage()"
+        class="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring focus:border-purple-300"
+      >
+        Get random image!
+      </button>
+      <img id="randomImage" src="" alt="random image" class="rounded" />
+    </div>
     <script
       src="https://api-maps.yandex.ru/2.1/?apikey=5af0a515-c3c7-4c5e-9bb4-ddd4e32ed2d2&lang=ru_RU"
       type="text/javascript"
     ></script>
+    <!-- Yandex maps API -->
 
     <script>
       document
@@ -87,20 +102,24 @@
             event.preventDefault();
             document.getElementById("weatherFormBtn").click();
           }
-        });
+        }); // if enter key pressed, click on button
 
       async function getWeather() {
         const city = document.getElementById("city").value;
 
         fetch("/weather", {
+          //
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ city: city }),
-        })
-          .then((response) => response.json())
+        }) // send request to server(index.js)
+          .then((response) => response.json()) // parse response to JSON
           .then((data) => {
+            console.log("Success:", data);
+
+            // fill popper with data
             document.getElementById("popper").classList.remove("hidden");
             document.getElementById(
               "cityName"
@@ -126,16 +145,21 @@
             document.getElementById(
               "windSpeed"
             ).textContent = `Wind Speed: ${data.weatherData.wind.speed} m/s`;
+            document.getElementById(
+              "coords"
+            ).textContent = `Coordinates: ${data.weatherData.coord.lat}, ${data.weatherData.coord.lon}`;
+            document.getElementById("headliner").textContent = "Weather info:";
 
+            // clear map container
             const mapContainer = document.getElementById("map");
             mapContainer.innerHTML = "";
-
+            // create new map
             createMap(
               data.weatherData.coord.lat,
               data.weatherData.coord.lon,
               data.weatherData.name
             );
-
+            // show popper
             setTimeout(() => {
               document.getElementById("popper").classList.add("visible");
             }, 10);
@@ -144,21 +168,38 @@
             console.error("Error:", error);
           });
       }
-
+      // create map function
       function createMap(lat, lon, cityName) {
         ymaps.ready(function () {
+          // Create ymaps instance
           var map = new ymaps.Map("map", {
             center: [lat, lon],
             zoom: 10,
             controls: ["zoomControl", "fullscreenControl"],
           });
-
+          // Create placemark
           var placemark = new ymaps.Placemark([lat, lon], {
             balloonContent: cityName,
           });
 
           map.geoObjects.add(placemark);
         });
+      }
+      async function randomImage() {
+        fetch("/randomImage", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+            document.getElementById("randomImage").src = data.imageUrl;
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
       }
     </script>
   </body>
