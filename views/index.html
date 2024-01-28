@@ -39,6 +39,7 @@
       </div>
       <button
         type="submit"
+        id="weatherFormBtn"
         onclick="getWeather()"
         class="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring focus:border-purple-300"
       >
@@ -46,7 +47,7 @@
       </button>
     </div>
 
-    <div class="flex items-center flex-col">
+    <div class="flex items-center flex-col text-black">
       <div
         id="weatherInfo"
         class="flex flex-col items-center p-8 bg-white rounded shadow-md"
@@ -62,8 +63,14 @@
           <h3 id="description" class="text-lg text-gray-500 mb-2"></h3>
           <h4 id="feelsLike" class="text-base text-gray-500 mb-2"></h4>
           <h5 id="humidity" class="text-base text-gray-500 mb-2"></h5>
+          <h5 id="pressure" class="text-base text-gray-500 mb-2"></h5>
           <h6 id="windSpeed" class="text-base text-gray-500 mb-2"></h6>
-          <div id="map" style="width: 300px; height: 300px"></div>
+          <h3 id="rainVolume" class="text-lg text-gray-500 mb-2"></h3>
+          <div
+            id="map"
+            style="width: 300px; height: 300px"
+            class="rounded"
+          ></div>
         </div>
       </div>
     </div>
@@ -73,6 +80,15 @@
     ></script>
 
     <script>
+      document
+        .getElementById("city")
+        .addEventListener("keyup", function (event) {
+          if (event.keyCode === 13) {
+            event.preventDefault();
+            document.getElementById("weatherFormBtn").click();
+          }
+        });
+
       async function getWeather() {
         const city = document.getElementById("city").value;
 
@@ -86,11 +102,12 @@
           .then((response) => response.json())
           .then((data) => {
             document.getElementById("popper").classList.remove("hidden");
-            document.getElementById("cityName").textContent =
-              data.weatherData.name;
+            document.getElementById(
+              "cityName"
+            ).textContent = `${data.weatherData.name}, ${data.weatherData.sys.country}`;
             document.getElementById(
               "weatherIcon"
-            ).src = `https://openweathermap.org/img/wn/${data.weatherData.weather[0].icon}.png`; //https://openweathermap.org/img/wn/10d@2x.png
+            ).src = `https://openweathermap.org/img/wn/${data.weatherData.weather[0].icon}.png`;
             document.getElementById(
               "temp"
             ).textContent = `Temperature: ${data.weatherData.main.temp}°C`;
@@ -104,26 +121,21 @@
               "humidity"
             ).textContent = `Humidity: ${data.weatherData.main.humidity}%`;
             document.getElementById(
+              "pressure"
+            ).textContent = `Pressure: ${data.weatherData.main.pressure} hPa`;
+            document.getElementById(
               "windSpeed"
             ).textContent = `Wind Speed: ${data.weatherData.wind.speed} m/s`;
-            document.getElementById("headliner").classList.add("hidden");
 
             const mapContainer = document.getElementById("map");
             mapContainer.innerHTML = "";
 
-            const map = new ymaps.Map(mapContainer, {
-              center: [data.weatherData.coord.lat, data.weatherData.coord.lon],
-              zoom: 10,
-              controls: ["zoomControl", "fullscreenControl"],
-            });
-
-            const placemark = new ymaps.Placemark(
-              [data.weatherData.coord.lat, data.weatherData.coord.lon],
-              {
-                balloonContent: data.weatherData.name,
-              }
+            createMap(
+              data.weatherData.coord.lat,
+              data.weatherData.coord.lon,
+              data.weatherData.name
             );
-            map.geoObjects.add(placemark);
+
             setTimeout(() => {
               document.getElementById("popper").classList.add("visible");
             }, 10);
@@ -131,6 +143,22 @@
           .catch((error) => {
             console.error("Error:", error);
           });
+      }
+
+      function createMap(lat, lon, cityName) {
+        ymaps.ready(function () {
+          var map = new ymaps.Map("map", {
+            center: [lat, lon],
+            zoom: 10,
+            controls: ["zoomControl", "fullscreenControl"],
+          });
+
+          var placemark = new ymaps.Placemark([lat, lon], {
+            balloonContent: cityName,
+          });
+
+          map.geoObjects.add(placemark);
+        });
       }
     </script>
   </body>

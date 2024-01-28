@@ -1,5 +1,5 @@
 const weatherAPIkey = "e31236ca2959caf5178b8298a93073e8";
-const yandexMapAPIkey = "5af0a515-c3c7-4c5e-9bb4-ddd4e32ed2d2";
+const IQAirAPIkey = "3b7be9cf-cb62-4e05-b700-825f466ce4e1";
 
 import express from "express";
 import path from "path";
@@ -27,8 +27,10 @@ app.post("/weather", async (req, res) => {
   const [weatherResponse, forecastResponse] = await Promise.all(
     urls.map((url) => fetch(url))
   );
+
   const weatherData = await weatherResponse.json();
   const forecastData = await forecastResponse.json();
+
   console.log(weatherData);
   res.send({ weatherData, forecastData });
 });
