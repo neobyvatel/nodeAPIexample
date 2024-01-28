@@ -10,17 +10,25 @@
       href="https://api.iconify.design/wi:day-storm-showers.svg"
       type="image/x-icon"
     />
+
+    <style>
+      #popper {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      #popper.visible {
+        opacity: 1;
+      }
+    </style>
   </head>
   <body class="bg-purple-300 h-screen w-screen">
-    <form
+    <div
       id="weatherForm"
-      action="/weather"
-      method="post"
       class="max-w-md mx-auto my-8 p-8 bg-white rounded shadow-md"
     >
       <div class="mb-4">
         <label for="city" class="text-sm font-medium text-gray-600 block"
-          >City:</label
+          >Enter city name:</label
         >
         <input
           type="text"
@@ -31,24 +39,99 @@
       </div>
       <button
         type="submit"
+        onclick="getWeather()"
         class="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring focus:border-purple-300"
       >
         Get weather
       </button>
-    </form>
+    </div>
 
     <div class="flex items-center flex-col">
-      <div class="flex flex-col items-center p-8 bg-white rounded shadow-md">
-        <h1 id="cityName" class="text-3xl font-semibold mb-2"></h1>
-        <h2 id="temp" class="text-2xl text-gray-700 mb-2"></h2>
-        <h3 id="description" class="text-lg text-gray-500 mb-2"></h3>
-        <h4 id="feelsLike" class="text-base text-gray-500 mb-2"></h4>
-        <h5 id="humidity" class="text-base text-gray-500 mb-2"></h5>
-        <h6 id="windSpeed" class="text-base text-gray-500 mb-2"></h6>
-      </div>
+      <div
+        id="weatherInfo"
+        class="flex flex-col items-center p-8 bg-white rounded shadow-md"
+      >
+        <h1 id="headliner">Weather information here...</h1>
+        <div id="popper" class="hidden">
+          <div id="weatherInfo" class="flex">
+            <h1 id="cityName" class="text-3xl font-semibold mb-2"></h1>
+            <img id="weatherIcon" src="" alt="weather icon" class="w-10 h-10" />
+          </div>
 
-      <div id="map" class="w-450 h-450"></div>
+          <h2 id="temp" class="text-2xl text-gray-700 mb-2"></h2>
+          <h3 id="description" class="text-lg text-gray-500 mb-2"></h3>
+          <h4 id="feelsLike" class="text-base text-gray-500 mb-2"></h4>
+          <h5 id="humidity" class="text-base text-gray-500 mb-2"></h5>
+          <h6 id="windSpeed" class="text-base text-gray-500 mb-2"></h6>
+          <div id="map" style="width: 300px; height: 300px"></div>
+        </div>
+      </div>
     </div>
-    <script></script>
+    <script
+      src="https://api-maps.yandex.ru/2.1/?apikey=5af0a515-c3c7-4c5e-9bb4-ddd4e32ed2d2&lang=ru_RU"
+      type="text/javascript"
+    ></script>
+
+    <script>
+      async function getWeather() {
+        const city = document.getElementById("city").value;
+
+        fetch("/weather", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ city: city }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("popper").classList.remove("hidden");
+            document.getElementById("cityName").textContent =
+              data.weatherData.name;
+            document.getElementById(
+              "weatherIcon"
+            ).src = `https://openweathermap.org/img/wn/${data.weatherData.weather[0].icon}.png`; //https://openweathermap.org/img/wn/10d@2x.png
+            document.getElementById(
+              "temp"
+            ).textContent = `Temperature: ${data.weatherData.main.temp}°C`;
+            document.getElementById(
+              "description"
+            ).textContent = `Description: ${data.weatherData.weather[0].description}`;
+            document.getElementById(
+              "feelsLike"
+            ).textContent = `Feels like: ${data.weatherData.main.feels_like}°C`;
+            document.getElementById(
+              "humidity"
+            ).textContent = `Humidity: ${data.weatherData.main.humidity}%`;
+            document.getElementById(
+              "windSpeed"
+            ).textContent = `Wind Speed: ${data.weatherData.wind.speed} m/s`;
+            document.getElementById("headliner").classList.add("hidden");
+
+            const mapContainer = document.getElementById("map");
+            mapContainer.innerHTML = "";
+
+            const map = new ymaps.Map(mapContainer, {
+              center: [data.weatherData.coord.lat, data.weatherData.coord.lon],
+              zoom: 10,
+              controls: ["zoomControl", "fullscreenControl"],
+            });
+
+            const placemark = new ymaps.Placemark(
+              [data.weatherData.coord.lat, data.weatherData.coord.lon],
+              {
+                balloonContent: data.weatherData.name,
+              }
+            );
+            map.geoObjects.add(placemark);
+            setTimeout(() => {
+              document.getElementById("popper").classList.add("visible");
+            }, 10);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    </script>
   </body>
 </html>
